@@ -1,5 +1,13 @@
-# جدار الفيديو (APK)
-1. ارفع كل الملفات إلى مستودع GitHub جديد (الفرع main).
-2. افتح تبويب Actions وانتظر انتهاء "Build Android APK" (أو شغّله يدويًا Run workflow).
-3. ادخل على آخر تشغيل ونزّل الملف video-wall-apk من قسم Artifacts، فيه app-debug.apk.
-لتغيير التصميم عدّل index.html فقط وارفعه، فيُبنى APK جديد تلقائيًا.
+# جدار الفيديو + مشغّل التطبيقات
+
+- `index.html`: صفحة جدار الفيديو (تُنشر عبر GitHub Pages).
+- `android/`: تطبيق أندرويد يفتح عدة تطبيقات معًا.
+- `.github/workflows/android.yml`: يبني ملف APK تلقائيًا.
+
+## نشر الصفحة
+Settings ← Pages ← Deploy from a branch ← `main` ← `/ (root)`.
+
+## الحصول على التطبيق
+تبويب **Actions** ← **Build Android APK** ← افتح آخر تشغيل ناجح ← نزّل **MultiLauncher-apk** ← فك الضغط وثبّت الملف على هاتفك
+(يلزم السماح بالتثبيت من مصادر غير معروفة).
+شرح الاستخدام في `android/README.md`.
