@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin" id="refMeta">
 <title>جدار الفيديو</title>
 <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d1022;--panel:#171b33;--line:#2a3052;--ink:#f1efff;--mute:#9aa0c4;--accent:#ffb52e;--accent-ink:#241700;--glow:rgba(255,181,46,.35);
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#0d1022;--panel:#171b33;--line:#2a3052;--ink:#f1efff;--mute:#9aa0c4;--accent:#ffb52e;--accent-ink:#241700;--glow:rgba(255,181,46,.35)}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3)}}
 :root[data-theme="light"]{--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Readex Pro",system-ui,sans-serif;line-height:1.6;padding-bottom:110px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Readex Pro",system-ui,sans-serif;line-height:1.6;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
 button,select,input{font:inherit;color:var(--ink)}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -80,6 +80,15 @@ body.sorting .tile iframe{pointer-events:none}
 #copies{flex:0 0 76px;min-width:0;text-align:center}
 .kbd{display:none}
 @media (hover:hover){.kbd{display:block}}
+/* التصفح المخفي */
+:root.priv{--accent:#b78cff;--accent-ink:#1a0b33;--glow:rgba(183,140,255,.35);--line:#3a2f63}
+#privBadge{display:none;align-items:center;gap:6px;background:#2a1b52;color:#e4d4ff;border:1px solid #b78cff;border-radius:999px;padding:2px 12px;font-size:13px;font-weight:600}
+:root.priv #privBadge{display:inline-flex}
+:root.priv .top{box-shadow:inset 0 3px 0 #b78cff}
+.privnote{display:none;color:#e4d4ff;background:#2a1b52;border:1px solid #b78cff;border-radius:12px;margin:12px 16px 0;padding:8px 14px;font-size:13px}
+:root.priv .privnote{display:block}
+#cover{position:fixed;inset:0;z-index:100;background:#000;color:#9aa0c4;display:none;place-items:center;text-align:center;padding:20px;cursor:pointer}
+#cover.on{display:grid}
 @media (max-width:620px){
  h1{font-size:22px}
  #grid{grid-template-columns:repeat(var(--colsm,1),minmax(0,1fr))}
@@ -93,7 +102,7 @@ body.sorting .tile iframe{pointer-events:none}
 <body>
 <header class="top">
   <div class="row1">
-    <div class="brand"><h1>جدار الفيديو</h1><span id="count"></span></div>
+    <div class="brand"><h1>جدار الفيديو</h1><span id="count"></span><span id="privBadge">وضع مخفي</span></div>
     <div class="seg" role="group" aria-label="طريقة العرض">
       <button data-m="grid" aria-pressed="true">شبكة</button>
       <button data-m="stage" aria-pressed="false">مسرح</button>
@@ -101,7 +110,7 @@ body.sorting .tile iframe{pointer-events:none}
     </div>
   </div>
   <div class="add">
-    <input type="text" id="url" placeholder="الصق رابط يوتيوب أو فيديو مباشر، وأكثر من رابط مسموح">
+    <input type="text" id="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="الصق رابط يوتيوب أو فيديو مباشر، وأكثر من رابط مسموح">
     <input type="number" id="copies" value="1" min="1" max="60" inputmode="numeric" aria-label="عدد النسخ" title="عدد النسخ من كل رابط">
     <button class="btn" id="addUrl">أضف الرابط</button>
     <button class="btn pri" id="addFiles">فيديوهات من جهازك</button>
@@ -109,6 +118,7 @@ body.sorting .tile iframe{pointer-events:none}
   </div>
 </header>
 
+<p class="privnote" role="note">الوضع المخفي لا يخفي عنوان IP. المواقع التي تحمّل منها الفيديوهات ترى عنوانك، ولإخفائه فعّل VPN على جهازك قبل التشغيل. الصفحة تمنع في هذا الوضع إرسال عنوانها كمرجع للمواقع، ولا تحفظ ما تضيفه.</p>
 <div id="empty">
   <h2>اسحب فيديوهاتك إلى هنا</h2>
   <p>شغّل كل ما تريد في وقت واحد، وركّز الصوت على شاشة واحدة.</p>
@@ -116,8 +126,9 @@ body.sorting .tile iframe{pointer-events:none}
 </div>
 <main><div id="grid" class="grid"></div></main>
 <p class="note">اضغط على أي فيديو من جهازك لينتقل إليه الصوت. في يوتيوب استخدم زر الصوت. ملفاتك لا تُرفع لأي مكان. لحماية الجهاز من الانهيار يعمل 3 فيديوهات معًا على الهاتف و6 على الكمبيوتر، وعند تجاوز الحد يُوقَف الأقدم مؤقتًا.</p>
-<p class="note kbd">المسطرة: تشغيل أو إيقاف الكل. M: كتم الكل. الأرقام 1 إلى 9: نقل الصوت إلى الشاشة المقابلة.</p>
+<p class="note kbd">المسطرة: تشغيل أو إيقاف الكل. M: كتم الكل. الأرقام 1 إلى 9: نقل الصوت إلى الشاشة المقابلة. Esc في الوضع المخفي: إخفاء الشاشة فورًا وإيقاف كل شيء.</p>
 
+<div id="cover"><div>اضغط في أي مكان للعودة</div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <nav id="dock" aria-label="التحكم في كل الشاشات">
   <button id="playAll" aria-label="شغّل الكل"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M8 5v14l11-7z" fill="currentColor"/></svg><span class="t">شغّل الكل</span></button>
@@ -127,6 +138,7 @@ body.sorting .tile iframe{pointer-events:none}
   <button id="muteAll" aria-label="كتم الكل"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="t">كتم الكل</span></button>
   <button id="autoBtn" type="button" aria-pressed="false" aria-label="تشغيل تلقائي عند الإضافة" title="تشغيل تلقائي عند الإضافة"><svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 8.5v7l6-3.5z" fill="currentColor"/></svg><span class="t">تلقائي</span></button>
   <button id="saverBtn" type="button" aria-pressed="false" aria-label="توفير البيانات" title="توفير البيانات"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-14 14zM5 19l7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="t">توفير</span></button>
+  <button id="privBtn" type="button" aria-pressed="false" aria-label="التصفح المخفي" title="التصفح المخفي: لا يُحفظ أي شيء تضيفه، وEsc يخفي الشاشة فورًا"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M4 20L20 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="t">مخفي</span></button>
   <button id="rotBtn" type="button" aria-pressed="true" aria-label="وضع التناوب" title="وضع التناوب: عشرات الشاشات يتبدل الحيّ منها"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M20 12a8 8 0 01-14 5M4 12a8 8 0 0114-5M18 3v4h-4M6 21v-4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="t">تناوب</span></button>
   <select id="maxSel" aria-label="عدد الشاشات الحيّة معًا" title="عدد الشاشات الحيّة معًا"><option value="3">حيّ 3</option><option value="6">حيّ 6</option><option value="10">حيّ 10</option><option value="15">حيّ 15</option><option value="30">حيّ 30</option><option value="999">الكل</option></select>
   <select id="speed" aria-label="السرعة"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
@@ -140,7 +152,8 @@ let tiles=[],audioTile=null,mode='grid',speed=1;
 const DEF=matchMedia('(pointer:coarse)').matches?3:6;let MAXP=DEF;
 const clr=()=>{try{localStorage.removeItem('vw_live')}catch(_){}};
 addEventListener('pagehide',clr);document.addEventListener('visibilitychange',()=>{if(document.hidden)clr()});
-let seq=0,tt,busy=false,restoring=true,autoplay=false,saver=false,rotate=true;
+let seq=0,tt,busy=false,restoring=true,autoplay=false,saver=false,rotate=true,priv=false;
+const TITLE=document.title;
 const io=new IntersectionObserver(es=>{
   if(!saver)return;
   es.forEach(en=>{
@@ -149,7 +162,7 @@ const io=new IntersectionObserver(es=>{
     else if(en.isIntersecting&&t.wasPlaying){t.wasPlaying=false;t.api.play()}
   });
 },{threshold:.05});
-function syncFlags(){$('#autoBtn').setAttribute('aria-pressed',autoplay);$('#saverBtn').setAttribute('aria-pressed',saver);$('#rotBtn').setAttribute('aria-pressed',rotate)}
+function syncFlags(){$('#privBtn').setAttribute('aria-pressed',priv);$('#autoBtn').setAttribute('aria-pressed',autoplay);$('#saverBtn').setAttribute('aria-pressed',saver);$('#rotBtn').setAttribute('aria-pressed',rotate)}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),3500)}
 function claim(t){
@@ -183,8 +196,8 @@ function rotStep(){
 }
 setInterval(rotStep,4000);
 function save(){
-  if(restoring)return;
-  try{localStorage.setItem('vw',JSON.stringify({mode,speed,autoplay,saver,rotate,maxp:MAXP,items:tiles.filter(t=>t.meta).map(t=>t.meta)}))}catch(_){}
+  if(restoring||priv)return;
+  try{localStorage.setItem('vw',JSON.stringify({mode,speed,autoplay,saver,rotate,maxp:MAXP,items:tiles.filter(t=>t.meta&&!t.priv).map(t=>t.meta)}))}catch(_){}
 }
 function applyOrder(){tiles.forEach((t,i)=>t.el.style.order=i)}
 function mkDrag(t,h){
@@ -255,8 +268,10 @@ function build(kind,name,media,mk){
   mkDrag(t,gr);
   pp.onclick=()=>t.api.toggle();
   au.onclick=()=>setAudio(audioTile===t?null:t);
-  fs.onclick=()=>{const f=box.requestFullscreen||box.webkitRequestFullscreen;if(f)f.call(box)};
-  rm.onclick=()=>{t.api.destroy();io.unobserve(el);el.remove();tiles=tiles.filter(x=>x!==t);if(audioTile===t)audioTile=null;render()};
+  fs.onclick=()=>{const f=box.requestFullscreen||box.webkitRequestFullscreen;if(f)f.call(box);else if(media.webkitEnterFullscreen)media.webkitEnterFullscreen()};
+  t.remove=()=>{t.api.destroy();io.unobserve(el);el.remove();tiles=tiles.filter(x=>x!==t);if(audioTile===t)audioTile=null;render()};
+  rm.onclick=()=>t.remove();
+  t.priv=priv;
   tiles.push(t);grid.append(el);render();t.api.rate(speed);
   io.observe(el);if(autoplay&&!restoring)t.api.play();
   return t;
@@ -362,7 +377,36 @@ $('#playAll').onclick=playAll;
 $('#pauseAll').onclick=pauseAll;
 $('#restart').onclick=()=>{tiles.forEach(t=>t.api.rewind());playAll()};
 $('#muteAll').onclick=()=>setAudio(null);
-$('#maxSel').onchange=e=>{MAXP=+e.target.value;save();if(MAXP>DEF)toast('تنبيه: رفع الحد قد يغلق الصفحة على هذا الجهاز، وإن حدث سنعيد الحد تلقائيًا');else clr()};
+function setPriv(on){
+  if(on===priv)return;
+  if(!on){
+    // الخروج: احذف كل ما أُضيف أثناء الوضع المخفي، ثم أعد الحفظ العادي
+    tiles.filter(t=>t.priv).forEach(t=>t.remove());
+    priv=false;
+  }else priv=true;
+  document.documentElement.classList.toggle('priv',priv);
+  document.title=priv?'صفحة جديدة':TITLE;
+  $('#refMeta').content=priv?'no-referrer':'strict-origin-when-cross-origin';
+  syncFlags();
+  if(!priv)save();
+  toast(priv?'التصفح المخفي: لا يُحفظ ما تضيفه، ويخفي Esc الشاشة. عنوان IP يحتاج VPN':'خرجت من التصفح المخفي وحُذف ما أضفته فيه');
+}
+$('#privBtn').onclick=()=>setPriv(!priv);
+function panic(on){
+  const c=$('#cover');
+  if(on){pauseAll();setAudio(null);c.classList.add('on')}else c.classList.remove('on');
+}
+$('#cover').onclick=()=>panic(false);
+addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if($('#cover').classList.contains('on'))panic(false);
+  else if(priv)panic(true);
+});
+function enforceMax(){
+  const act=tiles.filter(x=>x.active).sort((a,b)=>(+!!a.want-+!!b.want)||(a.seq-b.seq));
+  while(act.length>MAXP)act.shift().api.suspend();
+}
+$('#maxSel').onchange=e=>{MAXP=+e.target.value;enforceMax();save();if(MAXP>DEF)toast('تنبيه: رفع الحد قد يغلق الصفحة على هذا الجهاز، وإن حدث سنعيد الحد تلقائيًا');else clr()};
 $('#rotBtn').onclick=()=>{rotate=!rotate;syncFlags();save();toast(rotate?'وضع التناوب مفعّل: يتبدل الحيّ بين الشاشات تلقائيًا':'وضع التناوب متوقف')};
 $('#autoBtn').onclick=()=>{autoplay=!autoplay;syncFlags();save();toast(autoplay?'التشغيل التلقائي مفعّل: أي فيديو تضيفه يبدأ فورًا':'التشغيل التلقائي متوقف')};
 $('#saverBtn').onclick=()=>{saver=!saver;if(!saver)tiles.forEach(t=>t.wasPlaying=false);syncFlags();save();toast(saver?'توفير البيانات مفعّل: لا يُحمَّل الفيديو البعيد قبل تشغيله، وتتوقف الشاشات الخارجة عن النظر':'توفير البيانات متوقف')};
