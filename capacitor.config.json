@@ -1,0 +1,7 @@
+{
+  "appId": "com.videowall.app",
+  "appName": "جدار الفيديو",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": true }
+}
