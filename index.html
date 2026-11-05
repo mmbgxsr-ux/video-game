@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
 <title>جدار الفيديو</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d1022;--panel:#171b33;--line:#2a3052;--ink:#f1efff;--mute:#9aa0c4;--accent:#ffb52e;--accent-ink:#241700;--glow:rgba(255,181,46,.35);
+:root{--bg:#0d1022;--panel:#171b33;--line:#2a3052;--ink:#f1efff;--mute:#9aa0c4;--accent:#ffb52e;--accent-ink:#241700;--glow:rgba(255,181,46,.35);color-scheme:dark;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3)}}
-:root[data-theme="light"]{--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3);color-scheme:light}}
+:root[data-theme="light"]{color-scheme:light;--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Readex Pro",system-ui,sans-serif;line-height:1.6;padding-bottom:110px}
@@ -26,6 +28,7 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em;line-height:1.2
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
 .add{display:flex;gap:8px;flex-wrap:wrap}
 .add input{flex:1 1 240px;min-width:0;direction:ltr;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:14px}
+.add input:placeholder-shown{direction:rtl;text-align:right}
 .btn{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 16px;cursor:pointer;font-size:14px}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 #empty{margin:24px 16px;border:2px dashed var(--line);border-radius:20px;padding:56px 20px;text-align:center}
@@ -44,7 +47,7 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em;line-height:1.2
 .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;color:#fff}
 .bar.over{position:absolute;inset:auto 0 3px 0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding-top:28px;opacity:0;transition:opacity .2s}
 .tile:hover .bar.over,.tile:focus-within .bar.over{opacity:1}
-@media (hover:none){.bar.over{opacity:1}}
+@media (hover:none){.bar.over{opacity:1}.ib{width:42px;height:42px}}
 .ib{width:36px;height:36px;border-radius:10px;border:0;background:rgba(255,255,255,.14);color:#fff;display:inline-grid;place-items:center;cursor:pointer;flex:none}
 .ib:hover{background:rgba(255,255,255,.25)}
 .ib.danger:hover{background:#c23b3b}
@@ -57,11 +60,11 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em;line-height:1.2
 .eq i:nth-child(2){animation-delay:.25s!important}.eq i:nth-child(3){animation-delay:.5s!important}
 @keyframes eq{to{height:100%}}
 @media (prefers-reduced-motion:reduce){.eq i{animation:none!important;height:70%}}
-#dock{position:fixed;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:4px;padding:6px;border-radius:20px;background:color-mix(in srgb,var(--panel) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.35);max-width:calc(100% - 16px)}
+#dock{position:fixed;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:4px;padding:6px;border-radius:20px;background:color-mix(in srgb,var(--panel) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.35);max-width:calc(100% - 16px);overflow-x:auto;scrollbar-width:none}
 #dock button,#dock select{background:transparent;border:0;border-radius:14px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:14px;min-height:40px;white-space:nowrap}
 #dock button:hover,#dock select:hover{background:color-mix(in srgb,var(--ink) 10%,transparent)}
 #dock #playAll{background:var(--accent);color:var(--accent-ink);font-weight:600}
-#dock select option{color:#000}
+#dock select option{color:#000;background:#fff}
 .sep{width:1px;height:22px;background:var(--line)}
 .note{color:var(--mute);font-size:12px;padding:0 20px 12px;font-weight:300}
 body.drag::after{content:"أفلت الفيديوهات هنا";position:fixed;inset:10px;z-index:50;display:grid;place-items:center;border:3px dashed var(--accent);border-radius:24px;background:color-mix(in srgb,var(--bg) 85%,transparent);font-size:26px;font-weight:600;pointer-events:none}
@@ -73,7 +76,8 @@ body.drag::after{content:"أفلت الفيديوهات هنا";position:fixed;i
  #grid.stage{grid-template-columns:repeat(2,minmax(0,1fr))}
  #grid.stack{grid-template-columns:minmax(0,1fr)}
  #dock .t{display:none}
- #dock button,#dock select{padding:8px 10px}
+ #dock{gap:2px}
+ #dock button,#dock select{padding:8px}
 }
 </style>
 </head>
@@ -159,7 +163,7 @@ function build(kind,name,media,mk){
   t.api=mk(t);
   pp.onclick=()=>t.api.toggle();
   au.onclick=()=>setAudio(audioTile===t?null:t);
-  fs.onclick=()=>{const f=box.requestFullscreen||box.webkitRequestFullscreen;if(f)f.call(box)};
+  fs.onclick=()=>{const f=box.requestFullscreen||box.webkitRequestFullscreen;if(f)f.call(box);else{const v=box.querySelector('video');if(v&&v.webkitEnterFullscreen)v.webkitEnterFullscreen()}};
   rm.onclick=()=>{t.api.destroy();el.remove();tiles=tiles.filter(x=>x!==t);if(audioTile===t)audioTile=null;render()};
   tiles.push(t);grid.append(el);render();t.api.rate(speed);
   return t;
@@ -174,11 +178,13 @@ function addVideo(src,name){
   v.onplay=()=>uiPlaying(t,true);v.onpause=()=>uiPlaying(t,false);
   v.ontimeupdate=()=>{if(v.duration)prog.firstChild.style.width=(v.currentTime/v.duration*100)+'%'};
   v.onclick=()=>setAudio(audioTile===t?null:t);
+  v.onloadedmetadata=()=>{if(v.paused&&!v.currentTime)try{v.currentTime=0.05}catch(_){}};
   v.onerror=()=>{t.nm.textContent=name+' — تعذّر تشغيل هذا الفيديو'};
 }
 function addYouTube(id){
   const f=document.createElement('iframe');
-  f.src=YT+'/embed/'+id+'?enablejsapi=1&playsinline=1&mute=1&rel=0';
+  const org=/^https?:$/.test(location.protocol)?'&origin='+encodeURIComponent(location.origin):'';
+  f.src=YT+'/embed/'+id+'?enablejsapi=1&playsinline=1&mute=1&rel=0'+org;
   f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;
   f.title='فيديو يوتيوب '+id;f.referrerPolicy='strict-origin-when-cross-origin';
   let playing=false;
@@ -189,15 +195,33 @@ function addYouTube(id){
       restart:()=>{post('seekTo',[0,true]);api.play()},rate:r=>post('setPlaybackRate',[r]),destroy:()=>{}};
     return api;
   });
+  t.frame=f;t.sync=on=>{playing=on;uiPlaying(t,on)};
   const lk=document.createElement('a');lk.href=YTW+'/watch?v='+id;lk.target='_blank';lk.rel='noopener';lk.textContent='فتح';
   lk.style.cssText='color:#fff;font-size:12px;opacity:.8;text-decoration:underline;flex:none';
   t.nm.after(lk);
-  f.onload=()=>{try{f.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),YT)}catch(e){};t.api.rate(speed)};
+  f.onload=()=>{try{f.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),YT)}catch(e){}};
 }
+addEventListener('message',e=>{
+  if(!/(^|\.)youtube(-nocookie)?\.com$/.test((()=>{try{return new URL(e.origin).hostname}catch(_){return''}})()))return;
+  let d;try{d=typeof e.data==='string'?JSON.parse(e.data):e.data}catch(_){return}
+  const t=d&&tiles.find(x=>x.frame&&x.frame.contentWindow===e.source);if(!t)return;
+  if(d.event==='onReady'){t.api.rate(speed);t.api.mute(audioTile!==t)}
+  const st=d.event==='onStateChange'?d.info:d.event==='infoDelivery'&&d.info?d.info.playerState:undefined;
+  if(st===1||st===3)t.sync(true);else if(st===2)t.sync(false);else if(st===0)t.api.restart();
+});
 function addFiles(list){[...list].filter(f=>f.type.startsWith('video/')).forEach(f=>addVideo(URL.createObjectURL(f),f.name))}
 function addFromText(text){
-  (text||$('#url').value).split(/\s+/).filter(Boolean).forEach(u=>{const id=ytId(u);id?addYouTube(id):/^https?:\/\//.test(u)&&addVideo(u,decodeURIComponent(u.split('/').pop().split('?')[0])||u)});
-  $('#url').value='';
+  let n=0;
+  (text||$('#url').value).split(/\s+/).filter(Boolean).forEach(u=>{
+    const id=ytId(u);
+    if(id){addYouTube(id);n++}
+    else if(/^https?:\/\//.test(u)){
+      let nm=u;try{nm=decodeURIComponent(u.split('?')[0].split('/').pop())||u}catch(_){}
+      addVideo(u,nm);n++}
+  });
+  const inp=$('#url');
+  if(n||!inp.value.trim()){inp.value='';inp.placeholder=inp.dataset.ph}
+  else{inp.placeholder='الرابط غير صالح، الصق رابط يوتيوب أو رابط فيديو مباشر يبدأ بـ http';inp.value=''}
 }
 $('#addFiles').onclick=$('#pick2').onclick=()=>fileIn.click();
 fileIn.onchange=()=>{addFiles(fileIn.files);fileIn.value=''};
@@ -214,15 +238,16 @@ $('#speed').onchange=e=>{speed=+e.target.value;tiles.forEach(t=>t.api.rate(speed
 addEventListener('keydown',e=>{
   const tag=e.target.tagName;if(/INPUT|SELECT|TEXTAREA/.test(tag)||e.ctrlKey||e.metaKey||e.altKey)return;
   if(e.code==='Space'&&tag!=='BUTTON'){e.preventDefault();const any=tiles.some(t=>t.el.classList.contains('playing'));tiles.forEach(t=>any?t.api.pause():t.api.play())}
-  else if(e.key==='m'||e.key==='M')setAudio(null);
-  else if(/^[1-9]$/.test(e.key)&&tiles[+e.key-1])setAudio(tiles[+e.key-1]);
+  else if(e.code==='KeyM')setAudio(null);
+  else{const m=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(m&&tiles[+m[1]-1])setAudio(tiles[+m[1]-1])}
 });
+$('#url').dataset.ph=$('#url').placeholder;
 let dragN=0;
 addEventListener('dragenter',e=>{e.preventDefault();dragN++;document.body.classList.add('drag')});
 addEventListener('dragleave',()=>{if(--dragN<=0){dragN=0;document.body.classList.remove('drag')}});
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();dragN=0;document.body.classList.remove('drag');
-  if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);else addFromText(e.dataTransfer.getData('text'))});
+  if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);else addFromText(e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text'))});
 render();
 </script>
 </body>
