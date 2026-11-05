@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>جدار الفيديو</title>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1022;--panel:#171b33;--line:#2a3052;--ink:#f1efff;--mute:#9aa0c4;--accent:#ffb52e;--accent-ink:#241700;--glow:rgba(255,181,46,.35);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3)}}
+:root[data-theme="light"]{--bg:#eeeef7;--panel:#fff;--line:#d5d6ea;--ink:#151735;--mute:#5b5f86;--accent:#b36b00;--accent-ink:#fff;--glow:rgba(179,107,0,.3)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Readex Pro",system-ui,sans-serif;line-height:1.6;padding-bottom:110px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+button,select,input{font:inherit;color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:14px 16px 12px;display:grid;gap:12px;border-bottom:1px solid var(--line)}
+.row1{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:12px}
+h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+#count{color:var(--mute);font-size:14px;font-weight:300}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.add{display:flex;gap:8px;flex-wrap:wrap}
+.add input{flex:1 1 240px;min-width:0;direction:ltr;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:14px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 16px;cursor:pointer;font-size:14px}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+#empty{margin:24px 16px;border:2px dashed var(--line);border-radius:20px;padding:56px 20px;text-align:center}
+#empty h2{margin:0 0 6px;font-size:22px;font-weight:600}
+#empty p{margin:0 0 20px;color:var(--mute);font-weight:300}
+#grid{display:grid;gap:12px;padding:16px;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr))}
+#grid.stage{grid-template-columns:repeat(4,minmax(0,1fr))}
+#grid.stack{grid-template-columns:minmax(0,1fr)}
+.tile{background:#06070f;border-radius:18px;border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .25s,border-color .25s}
+.tile.audio{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 10px 40px var(--glow)}
+#grid.stage .tile.focus{grid-column:1/-1}
+.box{position:relative;aspect-ratio:16/9;background:#000}
+.box video,.box iframe{width:100%;height:100%;display:block;border:0;object-fit:contain}
+.prog{position:absolute;inset:auto 0 0 0;height:3px;background:rgba(255,255,255,.15);pointer-events:none}
+.prog b{display:block;height:100%;width:0;background:var(--accent)}
+.bar{display:flex;align-items:center;gap:6px;padding:8px 10px;color:#fff}
+.bar.over{position:absolute;inset:auto 0 3px 0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding-top:28px;opacity:0;transition:opacity .2s}
+.tile:hover .bar.over,.tile:focus-within .bar.over{opacity:1}
+@media (hover:none){.bar.over{opacity:1}}
+.ib{width:36px;height:36px;border-radius:10px;border:0;background:rgba(255,255,255,.14);color:#fff;display:inline-grid;place-items:center;cursor:pointer;flex:none}
+.ib:hover{background:rgba(255,255,255,.25)}
+.ib.danger:hover{background:#c23b3b}
+.tile.audio .ib[aria-label="الصوت"]{background:var(--accent);color:var(--accent-ink)}
+.nm{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:300}
+.eq{display:none;gap:2px;align-items:flex-end;height:16px}
+.tile.audio .eq{display:flex}
+.eq i{width:3px;height:30%;background:var(--accent);border-radius:2px}
+.tile.audio.playing .eq i{animation:eq 0.9s ease-in-out infinite alternate}
+.eq i:nth-child(2){animation-delay:.25s!important}.eq i:nth-child(3){animation-delay:.5s!important}
+@keyframes eq{to{height:100%}}
+@media (prefers-reduced-motion:reduce){.eq i{animation:none!important;height:70%}}
+#dock{position:fixed;z-index:25;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:4px;padding:6px;border-radius:20px;background:color-mix(in srgb,var(--panel) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.35);max-width:calc(100% - 16px)}
+#dock button,#dock select{background:transparent;border:0;border-radius:14px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:14px;min-height:40px}
+#dock button:hover,#dock select:hover{background:color-mix(in srgb,var(--ink) 10%,transparent)}
+#dock #playAll{background:var(--accent);color:var(--accent-ink);font-weight:600}
+#dock select option{color:#000}
+.sep{width:1px;height:22px;background:var(--line)}
+.note{color:var(--mute);font-size:12px;padding:0 20px 12px;font-weight:300}
+body.drag::after{content:"أفلت الفيديوهات هنا";position:fixed;inset:10px;z-index:50;display:grid;place-items:center;border:3px dashed var(--accent);border-radius:24px;background:color-mix(in srgb,var(--bg) 85%,transparent);font-size:26px;font-weight:600;pointer-events:none}
+.kbd{display:none}
+@media (hover:hover){.kbd{display:block}}
+@media (max-width:620px){
+ h1{font-size:22px}
+ #grid{grid-template-columns:repeat(var(--colsm,1),minmax(0,1fr))}
+ #grid.stage{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #grid.stack{grid-template-columns:minmax(0,1fr)}
+ #dock .t{display:none}
+ #dock button,#dock select{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="row1">
+    <div class="brand"><h1>جدار الفيديو</h1><span id="count"></span></div>
+    <div class="seg" role="group" aria-label="طريقة العرض">
+      <button data-m="grid" aria-pressed="true">شبكة</button>
+      <button data-m="stage" aria-pressed="false">مسرح</button>
+      <button data-m="stack" aria-pressed="false">عمود</button>
+    </div>
+  </div>
+  <div class="add">
+    <input type="text" id="url" placeholder="الصق رابط يوتيوب أو فيديو مباشر، وأكثر من رابط مسموح">
+    <button class="btn" id="addUrl">أضف الرابط</button>
+    <button class="btn pri" id="addFiles">فيديوهات من جهازك</button>
+    <input type="file" id="file" accept="video/*" multiple hidden>
+  </div>
+</header>
+
+<div id="empty">
+  <h2>اسحب فيديوهاتك إلى هنا</h2>
+  <p>شغّل كل ما تريد في وقت واحد، وركّز الصوت على شاشة واحدة.</p>
+  <button class="btn pri" id="pick2">اختر فيديوهات من جهازك</button>
+</div>
+<main><div id="grid" class="grid"></div></main>
+<p class="note">اضغط على أي فيديو من جهازك لينتقل إليه الصوت. في يوتيوب استخدم زر الصوت. ملفاتك لا تُرفع لأي مكان.</p>
+<p class="note kbd">المسطرة: تشغيل أو إيقاف الكل. M: كتم الكل. الأرقام 1 إلى 9: نقل الصوت إلى الشاشة المقابلة.</p>
+
+<nav id="dock" aria-label="التحكم في كل الشاشات">
+  <button id="playAll" aria-label="شغّل الكل"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M8 5v14l11-7z" fill="currentColor"/></svg><span class="t">شغّل الكل</span></button>
+  <button id="pauseAll" aria-label="أوقف الكل"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg><span class="t">أوقف</span></button>
+  <button id="restart" aria-label="من البداية"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 12a8 8 0 108-8M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="t">من البداية</span></button>
+  <span class="sep"></span>
+  <button id="muteAll" aria-label="كتم الكل"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="t">كتم الكل</span></button>
+  <select id="speed" aria-label="السرعة"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+</nav>
+
+<script>
+const $=s=>document.querySelector(s);
+const grid=$('#grid'),fileIn=$('#file');
+let tiles=[],audioTile=null,mode='grid',speed=1;
+const YT='https://www.youtube.com';
+const P={
+ play:'<path d="M8 5v14l11-7z" fill="currentColor"/>',
+ pause:'<path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/>',
+ vol:'<path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ mute:'<path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ close:'<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+};
+const icon=n=>`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">${P[n]}</svg>`;
+const ytId=u=>{const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/);return m?m[1]:null};
+function countText(n){return n===0?'':n===1?'شاشة واحدة':n===2?'شاشتان':n<=10?n+' شاشات':n+' شاشة'}
+function mkBtn(n,label,cls){const b=document.createElement('button');b.type='button';b.className='ib '+(cls||'');b.innerHTML=icon(n);b.title=label;b.setAttribute('aria-label',label);return b}
+function uiPlaying(t,on){t.el.classList.toggle('playing',on);t.pp.innerHTML=icon(on?'pause':'play')}
+function applyFocus(){tiles.forEach(t=>t.el.classList.toggle('focus',mode==='stage'&&t===(audioTile||tiles[0])))}
+function render(){
+  const n=tiles.length;
+  $('#empty').hidden=n>0;
+  $('#count').textContent=countText(n);
+  const cols=n<=1?1:n<=4?2:3;
+  grid.style.setProperty('--cols',cols);
+  grid.style.setProperty('--colsm',n<=2?1:2);
+  grid.className=mode==='grid'?'grid':mode;
+  applyFocus();
+}
+function setAudio(t){
+  audioTile=t;
+  tiles.forEach(x=>{const on=x===t;x.api.mute(!on);x.el.classList.toggle('audio',on);x.au.innerHTML=icon(on?'vol':'mute');x.au.setAttribute('aria-pressed',on)});
+  applyFocus();
+}
+function build(kind,name,media,mk){
+  const el=document.createElement('div');el.className='tile '+kind;
+  const box=document.createElement('div');box.className='box';box.append(media);
+  const pp=mkBtn('play','تشغيل أو إيقاف'),au=mkBtn('mute','الصوت'),fs=mkBtn('full','ملء الشاشة'),rm=mkBtn('close','حذف','danger');
+  const nm=document.createElement('span');nm.className='nm';nm.textContent=name;
+  const eq=document.createElement('span');eq.className='eq';eq.innerHTML='<i></i><i></i><i></i>';
+  const bar=document.createElement('div');bar.className='bar';bar.append(pp,au,nm,eq,fs,rm);
+  if(kind==='loc'){bar.classList.add('over');box.append(bar);el.append(box)}else{el.append(box,bar)}
+  const t={el,pp,au,nm,box};
+  t.api=mk(t);
+  pp.onclick=()=>t.api.toggle();
+  au.onclick=()=>setAudio(audioTile===t?null:t);
+  fs.onclick=()=>{const f=box.requestFullscreen||box.webkitRequestFullscreen;if(f)f.call(box)};
+  rm.onclick=()=>{t.api.destroy();el.remove();tiles=tiles.filter(x=>x!==t);if(audioTile===t)audioTile=null;render()};
+  tiles.push(t);grid.append(el);render();t.api.rate(speed);
+  return t;
+}
+function addVideo(src,name){
+  const v=document.createElement('video');v.src=src;v.playsInline=true;v.muted=true;v.loop=true;v.preload='metadata';
+  const t=build('loc',name,v,t=>({
+    play:()=>v.play().catch(()=>{}),pause:()=>v.pause(),toggle:()=>v.paused?v.play().catch(()=>{}):v.pause(),
+    mute:m=>{v.muted=m},restart:()=>{v.currentTime=0;v.play().catch(()=>{})},rate:r=>{v.playbackRate=r},
+    destroy:()=>{v.pause();if(src.startsWith('blob:'))URL.revokeObjectURL(src)}}));
+  const prog=document.createElement('div');prog.className='prog';prog.innerHTML='<b></b>';t.box.append(prog);
+  v.onplay=()=>uiPlaying(t,true);v.onpause=()=>uiPlaying(t,false);
+  v.ontimeupdate=()=>{if(v.duration)prog.firstChild.style.width=(v.currentTime/v.duration*100)+'%'};
+  v.onclick=()=>setAudio(audioTile===t?null:t);
+  v.onerror=()=>{t.nm.textContent=name+' — تعذّر تشغيل هذا الفيديو'};
+}
+function addYouTube(id){
+  const f=document.createElement('iframe');
+  f.src=YT+'/embed/'+id+'?enablejsapi=1&playsinline=1&mute=1&rel=0';
+  f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;
+  f.title='فيديو يوتيوب '+id;f.referrerPolicy='strict-origin-when-cross-origin';
+  let playing=false;
+  const post=(fn,args)=>{try{f.contentWindow.postMessage(JSON.stringify({event:'command',func:fn,args:args||[]}),YT)}catch(e){}};
+  const t=build('yt','يوتيوب · '+id,f,t=>{
+    const api={play:()=>{post('playVideo');playing=true;uiPlaying(t,true)},pause:()=>{post('pauseVideo');playing=false;uiPlaying(t,false)},
+      toggle:()=>playing?api.pause():api.play(),mute:m=>post(m?'mute':'unMute'),
+      restart:()=>{post('seekTo',[0,true]);api.play()},rate:r=>post('setPlaybackRate',[r]),destroy:()=>{}};
+    return api;
+  });
+  const lk=document.createElement('a');lk.href=YT+'/watch?v='+id;lk.target='_blank';lk.rel='noopener';lk.textContent='فتح';
+  lk.style.cssText='color:#fff;font-size:12px;opacity:.8;text-decoration:underline;flex:none';
+  t.nm.after(lk);
+  f.onload=()=>{try{f.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),YT)}catch(e){};t.api.rate(speed)};
+}
+function addFiles(list){[...list].filter(f=>f.type.startsWith('video/')).forEach(f=>addVideo(URL.createObjectURL(f),f.name))}
+function addFromText(text){
+  (text||$('#url').value).split(/\s+/).filter(Boolean).forEach(u=>{const id=ytId(u);id?addYouTube(id):/^https?:\/\//.test(u)&&addVideo(u,decodeURIComponent(u.split('/').pop().split('?')[0])||u)});
+  $('#url').value='';
+}
+$('#addFiles').onclick=$('#pick2').onclick=()=>fileIn.click();
+fileIn.onchange=()=>{addFiles(fileIn.files);fileIn.value=''};
+$('#addUrl').onclick=()=>addFromText();
+$('#url').addEventListener('keydown',e=>{if(e.key==='Enter')addFromText()});
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));render();
+});
+$('#playAll').onclick=()=>tiles.forEach(t=>t.api.play());
+$('#pauseAll').onclick=()=>tiles.forEach(t=>t.api.pause());
+$('#restart').onclick=()=>tiles.forEach(t=>t.api.restart());
+$('#muteAll').onclick=()=>setAudio(null);
+$('#speed').onchange=e=>{speed=+e.target.value;tiles.forEach(t=>t.api.rate(speed))};
+addEventListener('keydown',e=>{
+  const tag=e.target.tagName;if(/INPUT|SELECT|TEXTAREA/.test(tag)||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.code==='Space'&&tag!=='BUTTON'){e.preventDefault();const any=tiles.some(t=>t.el.classList.contains('playing'));tiles.forEach(t=>any?t.api.pause():t.api.play())}
+  else if(e.key==='m'||e.key==='M')setAudio(null);
+  else if(/^[1-9]$/.test(e.key)&&tiles[+e.key-1])setAudio(tiles[+e.key-1]);
+});
+let dragN=0;
+addEventListener('dragenter',e=>{e.preventDefault();dragN++;document.body.classList.add('drag')});
+addEventListener('dragleave',()=>{if(--dragN<=0){dragN=0;document.body.classList.remove('drag')}});
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{e.preventDefault();dragN=0;document.body.classList.remove('drag');
+  if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);else addFromText(e.dataTransfer.getData('text'))});
+render();
+</script>
+</body>
+</html>
