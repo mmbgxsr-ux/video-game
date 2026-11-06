@@ -77,6 +77,14 @@ body.drag::after{content:"أفلت الفيديوهات أو ملف PDF هنا";
 #pdfBody{height:70vh;min-height:240px;resize:vertical;overflow:auto;direction:ltr;background:#525659;color:#fff;text-align:center;padding:8px}
 #pdfBody canvas{display:block;margin:8px auto;background:#fff;max-width:none}
 #pdfBody>p{margin:24px}
+#wallsPanel{margin:0 16px 16px;border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden}
+#wallName{flex:1 1 160px;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:14px}
+.wall{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.wall:last-child{border-bottom:0}
+.wall .nm{color:var(--ink);font-size:14px;font-weight:600}
+.wall small{color:var(--mute);font-size:13px}
+.wall .btn{padding:6px 12px;border-radius:10px}
+#wallsList>p{margin:12px;color:var(--mute);font-size:14px}
 .kbd{display:none}
 @media (hover:hover){.kbd{display:block}}
 @media (max-width:620px){
@@ -106,6 +114,7 @@ body.drag::after{content:"أفلت الفيديوهات أو ملف PDF هنا";
     <input type="number" id="copies" min="1" value="1" inputmode="numeric" aria-label="عدد الشاشات من نفس الرابط" title="عدد الشاشات من نفس الرابط">
     <button class="btn" id="addUrl">أضف الرابط</button>
     <button class="btn" id="pdfBtn">ملف PDF</button>
+    <button class="btn" id="wallsBtn" aria-expanded="false" aria-controls="wallsPanel">الجدارات المحفوظة</button>
     <button class="btn pri" id="addFiles">فيديوهات من جهازك</button>
     <input type="file" id="file" accept="video/*" multiple hidden>
     <input type="file" id="pdfFile" accept="application/pdf,.pdf" hidden>
@@ -128,6 +137,14 @@ body.drag::after{content:"أفلت الفيديوهات أو ملف PDF هنا";
   </div>
   <div id="pdfBody" tabindex="0"></div>
 </section>
+<section id="wallsPanel" hidden aria-label="الجدارات المحفوظة">
+  <div class="pdfbar">
+    <input type="text" id="wallName" maxlength="40" placeholder="اسم الجدار الحالي" aria-label="اسم الجدار">
+    <button class="btn pri" id="wallSave">حفظ الحالي</button>
+    <button class="btn" id="wallsClose">إغلاق</button>
+  </div>
+  <div id="wallsList"></div>
+</section>
 <p class="note">اضغط على أي فيديو من جهازك لينتقل إليه الصوت. في يوتيوب استخدم زر الصوت. ملفاتك لا تُرفع لأي مكان.</p>
 <p class="note kbd">المسطرة: تشغيل أو إيقاف الكل. M: كتم الكل. الأرقام 1 إلى 9: نقل الصوت إلى الشاشة المقابلة.</p>
 
@@ -144,7 +161,7 @@ body.drag::after{content:"أفلت الفيديوهات أو ملف PDF هنا";
 <script>
 const $=s=>document.querySelector(s);
 const grid=$('#grid'),fileIn=$('#file');
-let tiles=[],audioTile=null,mode='grid',speed=1;
+let tiles=[],audioTile=null,mode='grid',speed=1,restoring=false;
 const YT='https://www.youtube-nocookie.com',YTW='https://www.youtube.com';
 const P={
  play:'<path d="M8 5v14l11-7z" fill="currentColor"/>',
@@ -188,7 +205,7 @@ function build(kind,name,media,mk){
   pp.onclick=()=>t.api.toggle();
   au.onclick=()=>setAudio(audioTile===t?null:t);
   fs.onclick=()=>{const f=box.requestFullscreen||box.webkitRequestFullscreen;if(f)f.call(box);else{const v=box.querySelector('video');if(v&&v.webkitEnterFullscreen)v.webkitEnterFullscreen()}};
-  rm.onclick=()=>{t.api.destroy();el.remove();tiles=tiles.filter(x=>x!==t);if(audioTile===t)audioTile=null;render()};
+  rm.onclick=()=>{t.api.destroy();el.remove();tiles=tiles.filter(x=>x!==t);if(audioTile===t)audioTile=null;render();persist()};
   tiles.push(t);grid.append(el);render();t.api.rate(speed);
   return t;
 }
@@ -204,6 +221,8 @@ function addVideo(src,name){
   v.onclick=()=>setAudio(audioTile===t?null:t);
   v.onloadedmetadata=()=>{if(v.paused&&!v.currentTime)try{v.currentTime=0.05}catch(_){}};
   v.onerror=()=>{t.nm.textContent=name+' — تعذّر تشغيل هذا الفيديو'};
+  if(!src.startsWith('blob:'))t.saved={k:'u',s:src,n:name};   // فيديوهات الجهاز (blob:) لا تُحفظ
+  persist();
 }
 function addYouTube(id){
   const f=document.createElement('iframe');
@@ -225,6 +244,8 @@ function addYouTube(id){
   lk.style.cssText='color:#fff;font-size:12px;opacity:.8;text-decoration:underline;flex:none';
   t.nm.after(lk);
   f.onload=()=>{try{f.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),YT)}catch(e){}};
+  t.saved={k:'y',s:id};
+  persist();
 }
 addEventListener('message',e=>{
   if(!/(^|\.)youtube(-nocookie)?\.com$/.test((()=>{try{return new URL(e.origin).hostname}catch(_){return''}})()))return;
@@ -355,27 +376,82 @@ fileIn.onchange=()=>{addFiles(fileIn.files);fileIn.value=''};
 $('#addUrl').onclick=()=>addFromText();
 $('#url').addEventListener('keydown',e=>{if(e.key==='Enter')addFromText()});
 document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
-  mode=b.dataset.m;document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));render();
+  mode=b.dataset.m;document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));render();persist();
 });
 $('#playAll').onclick=()=>tiles.forEach(t=>t.api.play());
 $('#pauseAll').onclick=()=>tiles.forEach(t=>t.api.pause());
 $('#restart').onclick=()=>tiles.forEach(t=>t.api.restart());
 $('#openAll').onclick=openAllYT;
 $('#muteAll').onclick=()=>setAudio(null);
-$('#speed').onchange=e=>{speed=+e.target.value;tiles.forEach(t=>t.api.rate(speed))};
+$('#speed').onchange=e=>{speed=+e.target.value;tiles.forEach(t=>t.api.rate(speed));persist()};
 addEventListener('keydown',e=>{
   const tag=e.target.tagName;if(/INPUT|SELECT|TEXTAREA/.test(tag)||e.target.closest&&e.target.closest('#pdfPanel')||e.ctrlKey||e.metaKey||e.altKey)return;
   if(e.code==='Space'&&tag!=='BUTTON'){e.preventDefault();const any=tiles.some(t=>t.el.classList.contains('playing'));tiles.forEach(t=>any?t.api.pause():t.api.play())}
   else if(e.code==='KeyM')setAudio(null);
   else{const m=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(m&&tiles[+m[1]-1])setAudio(tiles[+m[1]-1])}
 });
+/* حفظ الجدار: الجلسة الأخيرة تُستعاد تلقائيًا، وجدارات بأسماء. فيديوهات الجهاز غير مشمولة */
+const MODES=['grid','stage','stack'],SPEEDS=[.5,1,1.5,2];
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(_){return false}}
+function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(_){return d}}
+const snap=()=>({m:mode,sp:speed,i:tiles.filter(t=>t.saved).map(t=>t.saved)});
+function persist(){if(!restoring)store('vw:last',snap())}
+function apply(s){
+  restoring=true;
+  tiles.slice().forEach(t=>{t.api.destroy();t.el.remove()});tiles=[];audioTile=null;
+  mode=MODES.includes(s.m)?s.m:'grid';
+  speed=SPEEDS.includes(+s.sp)?+s.sp:1;
+  $('#speed').value=speed;
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.m===mode));
+  (Array.isArray(s.i)?s.i:[]).forEach(x=>{
+    if(!x)return;
+    if(x.k==='y'&&/^[\w-]{11}$/.test(x.s))addYouTube(x.s);
+    else if(x.k==='u'&&typeof x.s==='string'&&/^https?:\/\//i.test(x.s))addVideo(x.s,String(x.n||x.s));
+  });
+  restoring=false;render();persist();
+}
+const walls=()=>{const w=load('vw:walls',[]);return Array.isArray(w)?w.filter(x=>x&&typeof x.n==='string'):[]};
+function renderWalls(){
+  const box=$('#wallsList'),list=walls();box.textContent='';
+  if(!list.length){const p=document.createElement('p');p.textContent='لا توجد جدارات محفوظة بعد.';box.append(p);return}
+  list.forEach(w=>{
+    const r=document.createElement('div');r.className='wall';
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=w.n;
+    const c=document.createElement('small');c.textContent=countText(Array.isArray(w.i)?w.i.length:0);
+    const lo=document.createElement('button'),de=document.createElement('button');
+    lo.type=de.type='button';lo.className=de.className='btn';lo.textContent='تحميل';de.textContent='حذف';
+    lo.onclick=()=>loadWall(w.n);
+    de.onclick=()=>{store('vw:walls',walls().filter(x=>x.n!==w.n));renderWalls()};
+    r.append(nm,c,lo,de);box.append(r);
+  });
+}
+function loadWall(n){
+  const w=walls().find(x=>x.n===n);if(!w)return;
+  if(tiles.some(t=>!t.saved)&&!confirm('سيُستبدل الجدار الحالي وتُغلق فيديوهات جهازك. هل تريد المتابعة؟'))return;
+  apply(w);flash('تم تحميل: '+n);
+}
+function toggleWalls(open){
+  const p=$('#wallsPanel');p.hidden=!open;$('#wallsBtn').setAttribute('aria-expanded',open);
+  if(open){renderWalls();p.scrollIntoView({behavior:'smooth',block:'nearest'})}
+}
+$('#wallsBtn').onclick=()=>toggleWalls($('#wallsPanel').hidden);
+$('#wallsClose').onclick=()=>toggleWalls(false);
+$('#wallSave').onclick=()=>{
+  const inp=$('#wallName'),n=inp.value.trim().slice(0,40),s=snap();
+  if(!n){flash('اكتب اسمًا للجدار أولًا');inp.focus();return}
+  if(!s.i.length){flash('لا توجد شاشات قابلة للحفظ، فيديوهات الجهاز لا تُحفظ');return}
+  if(!store('vw:walls',[...walls().filter(x=>x.n!==n),{n,...s}])){flash('تعذّر الحفظ: التخزين غير متاح في هذا المتصفح');return}
+  inp.value='';renderWalls();
+  flash(tiles.some(t=>!t.saved)?'تم الحفظ، وفيديوهات جهازك غير مشمولة':'تم حفظ الجدار: '+n);
+};
+$('#wallName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#wallSave').click()});
 let dragN=0;
 addEventListener('dragenter',e=>{e.preventDefault();dragN++;document.body.classList.add('drag')});
 addEventListener('dragleave',()=>{if(--dragN<=0){dragN=0;document.body.classList.remove('drag')}});
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();dragN=0;document.body.classList.remove('drag');
   if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);else addFromText(e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text')||'')});
-render();
+{const last=load('vw:last',null);if(last&&Array.isArray(last.i)&&last.i.length)apply(last);else render()}
 </script>
 </body>
 </html>

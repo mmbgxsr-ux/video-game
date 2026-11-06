@@ -11,7 +11,7 @@ on:
       - ".github/workflows/video-wall-apk.yml"
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write   # لنشر الإصدار (Release)
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,6 +25,18 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      # مفتاح توقيع ثابت: بدونه يُنشأ مفتاح عشوائي في كل بناء ويرفض أندرويد
+      # تثبيت النسخة الجديدة فوق القديمة. الشرح في README (قسم التوقيع).
+      - name: Use fixed signing key
+        env:
+          KS: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            mkdir -p ~/.android
+            echo "$KS" | base64 -d > ~/.android/debug.keystore
+          else
+            echo "::warning::السر DEBUG_KEYSTORE_BASE64 غير موجود. سيُوقَّع الـ APK بمفتاح عشوائي ولن يُثبَّت فوق نسخة سابقة."
+          fi
       - run: npm ci
       - run: npm run build:web
       - run: npm run android:add
@@ -35,3 +47,15 @@ jobs:
         with:
           name: video-wall-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: video-wall-latest
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk video-wall.apk
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "جدار الفيديو (آخر نسخة)" --notes "-" --latest=false --target "$GITHUB_SHA"
+          gh release edit "$TAG" --notes "تم البناء من الـ commit: $GITHUB_SHA"
+          gh release upload "$TAG" video-wall.apk --clobber
