@@ -2,6 +2,12 @@
   "name": "video-wall",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "build:web": "node -e \"const f=require('fs');f.mkdirSync('www',{recursive:true});f.copyFileSync('index.html','www/index.html')\"",
+    "android:add": "cap add android",
+    "android:patch": "node scripts/android-extras.js",
+    "android:sync": "cap sync android"
+  },
   "dependencies": {
     "@capacitor/android": "7.6.10",
     "@capacitor/core": "7.6.10"

@@ -1,0 +1,29 @@
+name: Build Launcher APK
+on:
+  push:
+    branches: [main]
+    paths:
+      - "launcher-app/**"
+      - ".github/workflows/launcher-app.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      # المشروع بلا Gradle wrapper، و AGP 8.5 يتطلب Gradle 8.7 فأحدث
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - run: gradle assembleDebug --no-daemon
+        working-directory: launcher-app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MultiLauncher-apk
+          path: launcher-app/app/build/outputs/apk/debug/app-debug.apk
