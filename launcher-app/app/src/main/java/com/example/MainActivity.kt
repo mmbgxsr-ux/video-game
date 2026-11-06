@@ -8,6 +8,9 @@ import android.graphics.Rect
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.widget.*
@@ -20,7 +23,7 @@ class MainActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("groups", MODE_PRIVATE) }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var list: LinearLayout
-    private lateinit var copiesSpinner: Spinner
+    private lateinit var copiesInput: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,17 +40,30 @@ class MainActivity : Activity() {
             textSize = 22f
         })
 
-        // عدد النسخ لكل تطبيق
+        // عدد النوافذ لكل تطبيق (بدون حد أقصى)
         val copiesRow = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         copiesRow.addView(TextView(this).apply { text = "عدد النوافذ لكل تطبيق:  " })
-        copiesSpinner = Spinner(this).apply {
-            adapter = ArrayAdapter(
-                this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
-                listOf(1, 2, 3, 4)
-            )
+        copiesInput = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText("1")
+            setSingleLine()
+            minEms = 3
+            gravity = Gravity.CENTER
         }
-        copiesRow.addView(copiesSpinner)
+        copiesRow.addView(copiesInput)
         root.addView(copiesRow)
+
+        // بحث
+        val search = EditText(this).apply {
+            hint = "ابحث عن تطبيق"
+            setSingleLine()
+            addTextChangedListener(object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) { filterApps(s?.toString().orEmpty()) }
+                override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+                override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {}
+            })
+        }
+        root.addView(search)
 
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(ScrollView(this).apply { addView(list) },
@@ -66,6 +82,11 @@ class MainActivity : Activity() {
         loadApps()
     }
 
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        super.onDestroy()
+    }
+
     private fun loadApps() {
         Thread {
             val pm = packageManager
@@ -76,6 +97,7 @@ class MainActivity : Activity() {
                 .distinctBy { it.second }
                 .sortedBy { it.first.lowercase() }
             runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
                 apps.forEach { (label, pkg) ->
                     val cb = CheckBox(this).apply { text = label }
                     checks[pkg] = cb
@@ -85,23 +107,54 @@ class MainActivity : Activity() {
         }.start()
     }
 
+    private fun filterApps(q: String) {
+        checks.values.forEach { cb ->
+            cb.visibility = if (cb.text.contains(q.trim(), ignoreCase = true)) View.VISIBLE else View.GONE
+        }
+    }
+
     private fun launchAll() {
         val pkgs = checks.filter { it.value.isChecked }.keys.toList()
         if (pkgs.isEmpty()) { toast("اختر تطبيقًا واحدًا على الأقل"); return }
 
-        val copies = copiesSpinner.selectedItem as Int
+        val copies = (copiesInput.text.toString().toIntOrNull() ?: 1).coerceAtLeast(1)
         val jobs = pkgs.flatMap { p -> List(copies) { p } }
+
+        val warnings = mutableListOf<String>()
+        if (!isInMultiWindowMode) {
+            warnings += "المشغّل ليس في وضع تقسيم الشاشة أو النوافذ الحرة. أندرويد يمنع التطبيق الذي صار في الخلفية من فتح غيره، فقد يُفتح تطبيق واحد فقط."
+        }
+        if (jobs.size > 12) {
+            warnings += "ستُفتح ${jobs.size} نافذة، وقد يتباطأ الهاتف."
+        }
+
+        if (warnings.isEmpty()) {
+            startJobs(jobs)
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle("تنبيه")
+                .setMessage(warnings.joinToString("\n\n"))
+                .setPositiveButton("متابعة") { _, _ -> startJobs(jobs) }
+                .setNegativeButton("إلغاء", null)
+                .show()
+        }
+    }
+
+    private fun startJobs(jobs: List<String>) {
+        handler.removeCallbacksAndMessages(null)   // يمنع تراكم تشغيلين متتاليين
+
         val n = jobs.size
         val cols = ceil(sqrt(n.toDouble())).toInt()
         val rows = ceil(n.toDouble() / cols).toInt()
         val dm = resources.displayMetrics
         val w = dm.widthPixels / cols
         val h = dm.heightPixels / rows
+        val failed = mutableListOf<String>()
 
         jobs.forEachIndexed { i, pkg ->
             handler.postDelayed({
                 val intent = packageManager.getLaunchIntentForPackage(pkg)
-                if (intent == null) { toast("تعذّر فتح $pkg"); return@postDelayed }
+                if (intent == null) { failed += pkg; return@postDelayed }
                 intent.addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
@@ -115,10 +168,14 @@ class MainActivity : Activity() {
                 try {
                     startActivity(intent, opts.toBundle())
                 } catch (e: Exception) {
-                    toast("فشل فتح $pkg")
+                    failed += pkg
                 }
             }, i * 900L)
         }
+
+        handler.postDelayed({
+            if (failed.isNotEmpty()) toast("تعذّر فتح ${failed.size} نافذة")
+        }, n * 900L + 300L)
     }
 
     private fun saveGroup() {
