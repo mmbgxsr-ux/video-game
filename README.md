@@ -1,8 +1,8 @@
 # جدار الفيديو + مشغّل التطبيقات
 
-- `index.html`: صفحة جدار الفيديو (تُنشر عبر GitHub Pages).
+- `index.html`: صفحة جدار الفيديو (يوتيوب وروابط مباشرة وفيديوهات من جهازك وعارض PDF)، وتُنشر عبر GitHub Pages.
 - `launcher-app/`: تطبيق أندرويد يفتح عدة تطبيقات معًا.
-- `.github/workflows/android.yml`: يبني ملف APK تلقائيًا.
+- `.github/workflows/launcher-app.yml`: يبني ملف APK تلقائيًا.
 
 ## نشر الصفحة
 Settings ← Pages ← Deploy from a branch ← `main` ← `/ (root)`.

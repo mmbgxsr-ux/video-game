@@ -68,7 +68,7 @@ h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em;line-height:1.2
 #dock select option{color:#000;background:#fff}
 .sep{width:1px;height:22px;background:var(--line)}
 .note{color:var(--mute);font-size:12px;padding:0 20px 12px;font-weight:300}
-body.drag::after{content:"أفلت الفيديوهات هنا";position:fixed;inset:10px;z-index:50;display:grid;place-items:center;border:3px dashed var(--accent);border-radius:24px;background:color-mix(in srgb,var(--bg) 85%,transparent);font-size:26px;font-weight:600;pointer-events:none}
+body.drag::after{content:"أفلت الفيديوهات أو ملف PDF هنا";position:fixed;inset:10px;z-index:50;display:grid;place-items:center;border:3px dashed var(--accent);border-radius:24px;background:color-mix(in srgb,var(--bg) 85%,transparent);font-size:26px;font-weight:600;pointer-events:none}
 #pdfPanel{margin:0 16px 16px;border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden}
 .pdfbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .pdfbar .nm{color:var(--ink);font-weight:600;flex:1 1 120px}
@@ -81,6 +81,7 @@ body.drag::after{content:"أفلت الفيديوهات هنا";position:fixed;i
 body.drag::after{pointer-events:none}
 @media (hover:hover){.kbd{display:block}}
 @media (max-width:620px){
+ .top{position:relative}
  h1{font-size:22px}
  #grid{grid-template-columns:repeat(var(--colsm,1),minmax(0,1fr))}
  #grid.stage{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -126,7 +127,7 @@ body.drag::after{pointer-events:none}
     <button class="btn" id="pdfTab">فتح في تبويب</button>
     <button class="btn" id="pdfClose">إغلاق</button>
   </div>
-  <div id="pdfBody"></div>
+  <div id="pdfBody" tabindex="0"></div>
 </section>
 <p class="note">اضغط على أي فيديو من جهازك لينتقل إليه الصوت. في يوتيوب استخدم زر الصوت. ملفاتك لا تُرفع لأي مكان.</p>
 <p class="note kbd">المسطرة: تشغيل أو إيقاف الكل. M: كتم الكل. الأرقام 1 إلى 9: نقل الصوت إلى الشاشة المقابلة.</p>
@@ -251,9 +252,9 @@ function openAllYT(){
   ids.forEach((id,i)=>setTimeout(()=>openYT(id),i*800));
 }
 let flashT;function flash(msg){const n=document.querySelector('.note');if(n.dataset.o===undefined)n.dataset.o=n.textContent;n.textContent=msg;n.style.color='var(--accent)';clearTimeout(flashT);flashT=setTimeout(()=>{n.textContent=n.dataset.o;n.style.color=''},4500)}
-function addFiles(list){[...list].forEach(f=>{if(f.type.startsWith('video/'))addVideo(URL.createObjectURL(f),f.name);else if(f.type==='application/pdf'||/\.pdf$/i.test(f.name))openPdf(f)})}
+function addFiles(list){[...list].forEach(f=>{if(f.type.startsWith('video/'))addVideo(URL.createObjectURL(f),f.name);else if(f.type==='application/pdf'||/\.pdf$/i.test(f.name))openPdf(f);else flash('نوع الملف غير مدعوم: '+f.name)})}
 function addFromText(text){
-  const inp=$('#url'),src=text||inp.value;
+  const inp=$('#url'),src=text===undefined?inp.value:text;
   let n=0,bad=0;const cp=$('#copies'),c=Math.max(1,Math.floor(+cp.value)||1);cp.value=c;
   if(c>50&&!confirm('ستفتح '+c+' شاشة لكل رابط، وقد يتجمد المتصفح. هل تريد المتابعة؟'))return;
   src.split(/\s+/).filter(Boolean).forEach(u=>{
@@ -266,7 +267,7 @@ function addFromText(text){
     else bad++;
   });
   if(tiles.length>12)flash('عدد كبير من الشاشات ('+tiles.length+')، قد يبطؤ الجهاز. قلّل العدد إن حدث تقطيع');
-  if(n){inp.value='';if(bad)flash('تم تجاهل '+bad+' رابط غير مدعوم')}
+  if(n){if(text===undefined)inp.value='';if(bad)flash('تم تجاهل '+bad+' رابط غير مدعوم')}
   else if(src.trim())flash('الرابط غير مدعوم. استخدم رابط فيديو يوتيوب أو رابط فيديو مباشر يبدأ بـ http')
 }
 let pdfDoc=null,pdfZoom=1,pdfUrl=null,pdfLoad=null,pdfIO=null;
@@ -280,39 +281,51 @@ function loadPdfJs(){
     document.head.append(sc);
   }));
 }
+let pdfTok=0,pdfOpen=0;
 async function openPdf(file){
-  const body=$('#pdfBody');
+  const tok=++pdfOpen;pdfTok++;const body=$('#pdfBody');
+  if(pdfIO)pdfIO.disconnect();
+  if(pdfDoc){pdfDoc.destroy();pdfDoc=null}
   $('#pdfPanel').hidden=false;$('#pdfName').textContent=file.name;$('#pdfInfo').textContent='';
   if(pdfUrl)URL.revokeObjectURL(pdfUrl);
   pdfUrl=URL.createObjectURL(file);pdfZoom=1;
   body.innerHTML='<p>جارٍ تحميل الملف…</p>';
+  const top=$('.top');$('#pdfPanel').style.scrollMarginTop=(getComputedStyle(top).position==='sticky'?top.offsetHeight+8:8)+'px';
   $('#pdfPanel').scrollIntoView({behavior:'smooth',block:'start'});
   try{
     await loadPdfJs();
-    pdfDoc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
-    renderPdf();
+    const d=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+    if(tok!==pdfOpen){d.destroy();return}
+    pdfDoc=d;
+    await renderPdf();
   }catch(e){
+    if(tok!==pdfOpen)return;
     pdfDoc=null;body.textContent='';
     const fr=document.createElement('iframe');fr.src=pdfUrl;fr.title=file.name;
     fr.style.cssText='width:100%;height:100%;border:0;background:#fff';body.append(fr);
   }
 }
 async function renderPdf(){
-  if(!pdfDoc)return;
-  const body=$('#pdfBody');
+  const doc=pdfDoc;if(!doc)return;
+  const tok=++pdfTok,body=$('#pdfBody');
   if(pdfIO)pdfIO.disconnect();
+  pdfW=body.clientWidth;
+  const w=Math.max(200,(pdfW-16)*pdfZoom),dpr=Math.min(2,devicePixelRatio||1);
+  const p1=await doc.getPage(1);
+  if(tok!==pdfTok)return;
+  const v1=p1.getViewport({scale:1}),ratio=v1.height/v1.width;
   body.textContent='';
-  pdfW=body.clientWidth;const w=Math.max(200,(pdfW-16)*pdfZoom);
-  const dpr=Math.min(2,devicePixelRatio||1);
-  const p1=await pdfDoc.getPage(1),v1=p1.getViewport({scale:1}),ratio=v1.height/v1.width;
-  const doc=pdfDoc;
   pdfIO=new IntersectionObserver(es=>es.forEach(async e=>{
     if(!e.isIntersecting)return;
     const c=e.target;pdfIO.unobserve(c);
     try{
       const pg=await doc.getPage(+c.dataset.p),b=pg.getViewport({scale:1});
-      const vp=pg.getViewport({scale:w/b.width*dpr});
-      c.width=vp.width;c.height=vp.height;c.style.height=vp.height/dpr+'px';
+      let sc=w/b.width*dpr;
+      const px=b.width*b.height*sc*sc;
+      if(px>16e6)sc*=Math.sqrt(16e6/px);
+      const vp=pg.getViewport({scale:sc});
+      c.width=vp.width;c.height=vp.height;
+      c.style.height=w*b.height/b.width+'px';
       await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
     }catch(_){}
   }),{root:body,rootMargin:'600px'});
@@ -324,6 +337,7 @@ async function renderPdf(){
   $('#pdfInfo').textContent=doc.numPages+' صفحة · '+Math.round(pdfZoom*100)+'%';
 }
 function closePdf(){
+  pdfTok++;pdfOpen++;
   if(pdfIO)pdfIO.disconnect();
   if(pdfDoc){pdfDoc.destroy();pdfDoc=null}
   if(pdfUrl){URL.revokeObjectURL(pdfUrl);pdfUrl=null}
@@ -351,7 +365,7 @@ $('#openAll').onclick=openAllYT;
 $('#muteAll').onclick=()=>setAudio(null);
 $('#speed').onchange=e=>{speed=+e.target.value;tiles.forEach(t=>t.api.rate(speed))};
 addEventListener('keydown',e=>{
-  const tag=e.target.tagName;if(/INPUT|SELECT|TEXTAREA/.test(tag)||e.ctrlKey||e.metaKey||e.altKey)return;
+  const tag=e.target.tagName;if(/INPUT|SELECT|TEXTAREA/.test(tag)||e.target.closest&&e.target.closest('#pdfPanel')||e.ctrlKey||e.metaKey||e.altKey)return;
   if(e.code==='Space'&&tag!=='BUTTON'){e.preventDefault();const any=tiles.some(t=>t.el.classList.contains('playing'));tiles.forEach(t=>any?t.api.pause():t.api.play())}
   else if(e.code==='KeyM')setAudio(null);
   else{const m=/^(?:Digit|Numpad)([1-9])$/.exec(e.code);if(m&&tiles[+m[1]-1])setAudio(tiles[+m[1]-1])}
@@ -361,7 +375,7 @@ addEventListener('dragenter',e=>{e.preventDefault();dragN++;document.body.classL
 addEventListener('dragleave',()=>{if(--dragN<=0){dragN=0;document.body.classList.remove('drag')}});
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();dragN=0;document.body.classList.remove('drag');
-  if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);else addFromText(e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text'))});
+  if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);else addFromText(e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text')||'')});
 render();
 </script>
 </body>
