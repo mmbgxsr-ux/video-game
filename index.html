@@ -290,6 +290,12 @@ function addFromText(text){
   if(n){if(text===undefined)inp.value='';if(bad)flash('تم تجاهل '+bad+' رابط غير مدعوم')}
   else if(src.trim())flash('الرابط غير مدعوم. استخدم رابط فيديو يوتيوب أو رابط فيديو مباشر يبدأ بـ http')
 }
+/* مشاركة من تطبيق يوتيوب (يستدعيها التطبيق الأصلي): نص قد يحوي عنوانًا مع الرابط */
+function addShared(text){
+  const urls=(String(text||'').match(/https?:\/\/[^\s]+/g)||[]).filter(u=>ytId(u)||/\.(mp4|webm|m3u8|mov|ogv)(\?|#|$)/i.test(u));
+  if(urls.length)addFromText(urls.join(' '));
+  else flash('المحتوى المشارك لا يحوي رابط فيديو يوتيوب أو فيديو مباشر');
+}
 let pdfDoc=null,pdfZoom=1,pdfUrl=null,pdfLoad=null,pdfIO=null;
 const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 function loadPdfJs(){
