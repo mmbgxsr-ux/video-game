@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build:web": "node -e \"const f=require('fs');f.mkdirSync('www',{recursive:true});f.copyFileSync('index.html','www/index.html')\"",
+    "build:web": "node -e \"const f=require('fs');f.mkdirSync('www',{recursive:true});['index.html','offline.html'].forEach(n=>f.copyFileSync(n,'www/'+n))\"",
     "android:add": "cap add android",
     "android:patch": "node scripts/android-extras.js",
     "android:sync": "cap sync android"

@@ -9,6 +9,7 @@
 
 ```
 index.html                       صفحة جدار الفيديو (يجب أن تبقى في الجذر لـ GitHub Pages)
+offline.html                     صفحة تظهر في التطبيق عند انقطاع الإنترنت
 capacitor.config.json            إعدادات تغليف الصفحة كتطبيق أندرويد
 package.json / package-lock.json اعتماديات Capacitor وسكربتات البناء
 scripts/android-extras.js        تعديلات أندرويد تُطبَّق بعد إنشاء مشروع Capacitor
@@ -26,10 +27,18 @@ Settings ← Pages ← Deploy from a branch ← `main` ← `/ (root)`.
 
 | الـ workflow | اسم الـ artifact | يُشغَّل تلقائيًا عند تعديل |
 |---|---|---|
-| Build Video Wall APK | `video-wall-apk` | `index.html` أو إعدادات Capacitor أو `scripts/` |
+| Build Video Wall APK | `video-wall-apk` | إعدادات Capacitor أو `offline.html` أو `scripts/` |
 | Build Launcher APK | `MultiLauncher-apk` | `launcher-app/` |
 
 يمكن تشغيل أيٍّ منهما يدويًا من زر **Run workflow**.
+
+## التحديث التلقائي لتطبيق جدار الفيديو
+التطبيق يحمّل الصفحة من GitHub Pages (`server.url` في `capacitor.config.json`)، لذلك:
+
+- أي تعديل على `index.html` يُدفع إلى `main` يصل إلى التطبيق المثبّت عند فتحه، دون APK جديد. قد يتأخر دقائق بسبب نشر Pages والتخزين المؤقت.
+- يلزم الإنترنت لتشغيل التطبيق، وعند انقطاعه تظهر `offline.html`.
+- تغييرات الجزء الأصلي (`scripts/android-extras.js` أو `capacitor.config.json` أو إصدار Capacitor) تحتاج APK جديدًا يُثبَّت يدويًا، لأن أندرويد لا يسمح بتحديث صامت خارج Google Play.
+- إذا غيّرتَ اسم المستودع أو حسابك، حدّث `server.url` في `capacitor.config.json`.
 
 ## البناء المحلي لتطبيق جدار الفيديو
 يلزم Node 20+ و JDK 21 و Android SDK:

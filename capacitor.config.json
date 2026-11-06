@@ -2,6 +2,10 @@
   "appId": "com.videowall.app",
   "appName": "جدار الفيديو",
   "webDir": "www",
-  "server": { "androidScheme": "https" },
+  "server": {
+    "androidScheme": "https",
+    "url": "https://mmbgxsr-ux.github.io/video-game/",
+    "errorPath": "offline.html"
+  },
   "android": { "allowMixedContent": true }
 }
